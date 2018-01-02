@@ -11,7 +11,9 @@
     "posttest": "npm run lint && nsp check"
   },
   "dependencies": {
-    "hapi": "^17.2.0"
+    "firebase-admin": "^5.6.0",
+    "hapi": "^17.2.0",
+    "hapi-auth-firebase": "^1.0.4"
   },
   "devDependencies": {
     "eslint": "^3.17.1",
