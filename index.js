@@ -4,7 +4,6 @@ const Hapi = require('hapi');
 
 // Create a server with a host and port
 const server = Hapi.server({ 
-    host: 'localhost', 
     port: process.env.PORT || 8000 
 });
 
