@@ -1,15 +1,13 @@
 'use strict';
 
-const boom = require('boom');
-const hoek = require('hoek');
-const firebaseAdmin = require("firebase-admin");
-
-const internals = {};
-
-internals.implementaion = function(server, options) {
+const scheme = function(server, options) {
+    const boom = require('boom');
+    const hoek = require('hoek');
+    const firebaseAdmin = require("firebase-admin");
+    
     const settings = hoek.clone(options);
 
-    const scheme = {
+    return {
         authenticate: async function (request, h) {
             const authorization = request.headers.authorization;
 
@@ -17,9 +15,9 @@ internals.implementaion = function(server, options) {
                 throw boom.unauthorized(null, 'firebase', settings.unauthorizedAttributes);
             }
 
-            const parts = authorization.split(/s+/);
+            const parts = authorization.split(" ");
 
-            if (parts[0].toLowerCase !== 'bearer') {
+            if (parts[0].toLowerCase() !== 'bearer') {
                 throw boom.unauthorized(null, 'firebase', settings.unauthorizedAttributes);
             }
 
@@ -29,23 +27,24 @@ internals.implementaion = function(server, options) {
 
             const credential = parts[1];
             try {
-                const decodedToken = firebaseAdmin.auth().verifyIdToken(authToken);
+                const decodedToken = await firebaseAdmin.auth().verifyIdToken(credential);
                 if (!decodedToken) {
                     throw boom.unauthorized('Unable to authenticate user', 'firebase', settings.unauthorizedAttributes);
                 } else {
-                    return h.authenticated({ decodedToken });
+                    return h.authenticated({ credentials: decodedToken });
                 }
             } catch (err) {
-                throw boom.badImplementation('Unable to authenticate token', 'firebase');
+                throw boom.unauthorized('Unable to authenticate token', 'firebase', settings.unauthorizedAttributes);
             }
         }
     }
-    return scheme;
 }
 
-exports.plugin = {
-    name: 'firebase-custom',
-    register: function(server) {
-        server.auth.scheme('firebase-custom', internals.implementaion)
-    }
-};
+module.exports = {
+    register: async (server, options) => {
+        server.auth.scheme('firebase', scheme)
+        server.auth.strategy('firebase', 'firebase');
+    },
+    name: 'Firebase Authentication Plugin',
+    version: '0.0.1'
+}

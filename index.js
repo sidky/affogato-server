@@ -2,6 +2,7 @@ const util = require('util')
 
 const firebaseAdmin = require("firebase-admin");
 const Hapi = require('hapi');
+var caltrain = require('./caltrain.js');
 //const hapiAuthFirebase = require('hapi-auth-firebase');
 
 var serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE);
@@ -16,48 +17,8 @@ const server = Hapi.server({
     port: process.env.PORT || 8000 
 });
 
-const boom = require('boom');
-const hoek = require('hoek');
-
-const scheme = function(server, options) {
-    const settings = hoek.clone(options);
-    return {
-        authenticate: async function (request, h) {
-            const authorization = request.headers.authorization;
-
-            if (!authorization) {
-                // h.unauthenticated('Authorization header missing');
-                throw boom.unauthorized(null, 'firebase', settings.unauthorizedAttributes);
-            }
-
-            const parts = authorization.split(" ");
-
-            if (parts[0].toLowerCase() !== 'bearer') {
-                throw boom.unauthorized(null, 'firebase', settings.unauthorizedAttributes);
-            }
-
-            if (parts.length !== 2) {
-                throw boom.badRequest('Bad HTTP authentication header', 'firebase');
-            }
-
-            const credential = parts[1];
-            try {
-                const decodedToken = firebaseAdmin.auth().verifyIdToken(credential);
-                if (!decodedToken) {
-                    throw boom.unauthorized('Unable to authenticate user', 'firebase', settings.unauthorizedAttributes);
-                } else {
-                    return h.authenticated({ credentials: decodedToken });
-                }
-            } catch (err) {
-                throw boom.unauthorized('Unable to authenticate token', 'firebase', settings.unauthorizedAttributes);
-            }
-        }
-    }
-}
-
 async function start() {
-    server.auth.scheme('firebase', scheme)
-    server.auth.strategy('firebase', 'firebase');
+    await server.register(require('./firebase-auth.js'));
 
     server.route({
         method: 'GET',
@@ -66,7 +27,40 @@ async function start() {
             return 'hello world';
         }
     });
-    
+
+    server.route({
+        method: 'GET',
+        path:'/caltrain/lines', 
+        handler: function (request, h) {
+            return caltrain.lines();
+        }
+    });
+
+    server.route({
+        method: 'GET',
+        path:'/caltrain/patterns', 
+        handler: function (request, h) {
+            return caltrain.patterns(request.query.line_id);
+        }
+    });
+
+    server.route({
+        method: 'GET',
+        path:'/caltrain/timetable', 
+        handler: function (request, h) {
+            return caltrain.timetable(request.query.line_id);
+        }
+    });
+
+    server.route({
+        method: 'GET',
+        path:'/caltrain/stopPlaces', 
+        handler: function (request, h) {
+            var v = caltrain.stop_places();
+            return v;
+        }
+    });
+
     server.route({
         method: 'GET',
         path: '/api/foo',
@@ -75,10 +69,24 @@ async function start() {
         },
         handler: function (request, h) {
             console.log(util.inspect(request.auth, false, null));
+            var db = firebaseAdmin.database();
+            var ref = db.ref("users");
+            console.log("ref: %o", ref);
+            var properties = {
+                name: request.auth.credentials.name,
+                picture: request.auth.credentials.picture,
+                auth_time: request.auth.credentials.auth_time,
+                email: request.auth.credentials.email
+            }
+            var userObject = {};
+            userObject[request.auth.credentials.uid] = properties;
+
+            ref.update(userObject);
+            
+            console.log("complete");
             return { 'foo': 1, 'bar': 'baz'};
         }
     });
-    
    
     try {
         await server.start();

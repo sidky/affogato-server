@@ -12,12 +12,13 @@
   },
   "dependencies": {
     "firebase-admin": "^5.6.0",
+    "gtfs-realtime-bindings": "0.0.4",
     "hapi": "^17.2.0",
-    "hapi-auth-firebase": "^1.0.4"
+    "request": "^2.83.0",
+    "request-promise": "^4.2.2"
   },
   "devDependencies": {
     "eslint": "^3.17.1",
-    "eslint-config-loopback": "^8.0.0",
     "nsp": "^2.1.0"
   },
   "repository": {
