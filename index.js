@@ -3,7 +3,6 @@ const util = require('util')
 const firebaseAdmin = require("firebase-admin");
 const Hapi = require('hapi');
 var caltrain = require('./caltrain.js');
-//const hapiAuthFirebase = require('hapi-auth-firebase');
 
 var serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE);
 
