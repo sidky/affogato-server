@@ -1,1 +1,1 @@
-web: node index.js
+web: java -jar build/libs/affogato-0.1.jar
