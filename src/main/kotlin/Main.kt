@@ -19,5 +19,6 @@ fun main(args: Array<String>) {
             }
         }
     }
+    System.out.printf("Listening on: $port")
     server.start(wait = true)
 }
