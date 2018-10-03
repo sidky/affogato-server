@@ -11,7 +11,7 @@ fun main(args: Array<String>) {
     val server = embeddedServer(Netty,port) {
         routing {
             get("/") {
-                call.respondText("Hello, World", ContentType.Text.Html)
+                call.respondText("Hello, World again", ContentType.Text.Html)
             }
 
             get("/demo") {
